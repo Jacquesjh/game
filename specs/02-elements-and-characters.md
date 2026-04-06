@@ -13,9 +13,10 @@ Each element is a distinct playstyle archetype. Same mechanical framework, radic
 
 Each element has:
 - Distinct **color palette** and **particle style**
-- Unique L/H attack visual forms
-- Unique Q and E abilities
-- Unique combo outcomes (same L,L,H input = different attack)
+- Unique L/H attack variants (L1, L2... H1, H2...) with distinct animations
+- Unique combo outcomes (same L,L,H input = different attack per element)
+- Unique dodge attack feel (DL, DH)
+- Unique execution animations
 - Unique passive trait (small always-on modifier)
 
 ---
@@ -45,11 +46,11 @@ Each element has:
 | H, H | Meteor — very slow, very high damage, large projectile |
 | H, L | Scorch pulse — quick radial fire burst to interrupt |
 
-**Q Ability:** *Flame Dash* — short-range dash that leaves a fire trail. Trail persists briefly and damages opponents who step on it.
+**Dodge Light (DL):** Short forward-dash fireball. Fast, low damage. Excellent combo opener.
 
-**E Ability:** *Inferno Barrage* — rapid-fire sequence of small fireballs (3-5). Low individual damage, but combo-able and stamina-draining for blocker.
+**Dodge Heavy (DH):** Dash forward trailing fire, then emit a small AoE burst at endpoint. Higher risk, high reward opener.
 
-**Stamina Cost Profile:** Moderate to high. Fire is punishing to play sloppy with — you'll run out of stamina fast if you don't land hits.
+**Stamina Cost Profile:** High relative to other elements. Fire rewards aggression but punishes reckless spamming — attacking stalls regen, and Fire attacks cost more stamina than average.
 
 ---
 
@@ -78,11 +79,11 @@ Each element has:
 | H, H | Blizzard bolt — slows opponent movement briefly |
 | H, L | Current snap — quick mid-range water snap, interrupts dodge |
 
-**Q Ability:** *Mirror Flow* — for 2 seconds, Water Mage can "absorb" one incoming projectile and redirect it. High skill ceiling, huge payoff.
+**Dodge Light (DL):** Quick sidestep water slash. Low cost, curved trajectory — good for mind games.
 
-**E Ability:** *Whirlpool* — places a vortex on the map. Opponents near it are pulled toward the center and slowed. Short duration.
+**Dodge Heavy (DH):** Dodge into an undertow pull — short-range wave that drags opponent toward you. High skill expression.
 
-**Stamina Cost Profile:** Low to moderate. Water rewards patience — you regenerate stamina through blocking, so you can sustain long fights.
+**Stamina Cost Profile:** Low to moderate. Water's passive (stamina regen on block) means sustained blocking is viable — patient play keeps stamina topped up.
 
 ---
 
@@ -111,11 +112,11 @@ Each element has:
 | H, H | Monolith — extremely slow, if it hits: massive damage + long stagger |
 | H, L | Rubble spray — quick low-damage spread shot to interrupt |
 
-**Q Ability:** *Stone Wall* — places a temporary solid wall on the map. Blocks projectiles and movement. Can be used to force opponents into kill zones.
+**Dodge Light (DL):** Short backwards/sideways dodge + stone shard counter-flick. Defensive — retreats while firing.
 
-**E Ability:** *Granite Form* — brief defensive stance (1.5 sec). During it, incoming attacks deal reduced damage and Earth is immune to stagger. High cooldown.
+**Dodge Heavy (DH):** Charge dodge forward + boulder slam at endpoint. Commitment move, huge stagger on hit.
 
-**Stamina Cost Profile:** Low. Earth is designed to outlast opponents. Your attacks cost less, your blocks drain less. The threat is that your attacks are slow — you need to create openings.
+**Stamina Cost Profile:** Low. Earth attacks cost less stamina than other elements, and blocking drains less due to the Fortitude passive. Built for sustained fights.
 
 ---
 
@@ -144,11 +145,11 @@ Each element has:
 | H, H | Storm call — brief channeled storm (multiple small hits) |
 | H, L | Pressure snap — close-range knockback |
 
-**Q Ability:** *Tailwind* — brief self-speed boost. Moves significantly faster for 2 seconds, harder to track with homing projectiles.
+**Dodge Light (DL):** Teleport-like blink dodge + instant air crescent. Very fast, short range. Air's signature "now you see me" move.
 
-**E Ability:** *Vacuum* — creates a localized void that pulls all nearby projectiles inward and destroys them. Counter-play against projectile-heavy opponents.
+**Dodge Heavy (DH):** Cyclone dodge — spin dodge leaving a wind trail that damages anyone caught in it, then fire a spiral at endpoint.
 
-**Stamina Cost Profile:** Moderate. Air is less about stamina management and more about positioning. You're less tanky, so you need to avoid hits entirely rather than block them.
+**Stamina Cost Profile:** Moderate. Air's Gust Step passive makes dodging more viable as a defense strategy, reducing reliance on blocking. Less tanky overall — position or die.
 
 ---
 

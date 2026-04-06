@@ -29,24 +29,33 @@ Since we're working top-down and in a browser, the Genshin aesthetic adapts to:
 
 ### Animation States (per character)
 - `idle` — subtle breathing loop
-- `run` — 4/8 directional movement
-- `attack_light` — casting animation
-- `attack_heavy_windup` — telegraphed windup
-- `attack_heavy_fire` — release animation
+- `run` — 8 directional movement (fluid, analog)
+- `attack_light_[variant]` — each light variant has its own cast animation (e.g. `attack_light_1`, `attack_light_2`)
+- `attack_heavy_windup_[variant]` — telegraphed windup per variant
+- `attack_heavy_fire_[variant]` — release animation per variant
+- `combo_[sequence]` — specific animations per combo (e.g. `combo_L_L_H`, `combo_DL_H`) — every distinct combo sequence has a distinct animation
+- `dodge` — dash animation
+- `dodge_attack_light` / `dodge_attack_heavy` — attack during dodge, distinct from standing attack
 - `block` — guard stance
 - `stagger` — recoil
-- `stamina_break` — stumble
-- `dodge` — dash
-- `death` — defeat animation
+- `stamina_break` — stumble animation
+- `downed` — collapse, lying animation (looped)
+- `execution_[id]` — execution animation (one per unlocked execution, long form)
+- `being_executed` — receiving execution animation (counterpart)
 
 ### Asset Source Strategy (Hobby Project)
-Since this is a personal project:
-- **Option A:** Screenshot/rip sprites from Genshin Impact or similar games (legally gray but fine for private use)
-- **Option B:** Use AI image generation (Midjourney, DALL-E) with the aesthetic prompt
-- **Option C:** Find CC0/free sprite packs from itch.io that match the vibe
-- **Option D:** Placeholder art first (colored rectangles), polish later
 
-Recommended approach: Start with **colored placeholder rectangles** to get the game running. Replace with proper art once mechanics are solid. This is the right order of operations for a hobby game.
+**The approach:** Use Genshin Impact as a direct visual reference. For any asset (tree, character, building, effect), find a screenshot or official art of that thing in Genshin, then use an AI image generator (Midjourney, DALL-E 3, Stable Diffusion) to regenerate it in the correct perspective for our game (top-down 45°, sprite sheet format).
+
+Workflow for an asset:
+1. Find Genshin Impact reference image (Google, wiki, official art)
+2. Prompt AI: *"top-down 45 degree isometric sprite, [description from reference], Genshin Impact art style, transparent background, game asset"*
+3. Clean up in Photoshop/GIMP if needed
+4. Import as sprite sheet
+
+This is a private hobby project. We're not publishing this commercially. Use references freely.
+
+For v1: **colored placeholder sprites** to get combat working. Real art pass comes after mechanics are solid.
 
 ---
 
@@ -85,15 +94,28 @@ Recommended approach: Start with **colored placeholder rectangles** to get the g
 - **Menus:** Warm background (parchment, wood panel, or blurred game world). Large readable buttons.
 - **Color:** Match the elemental palette of the player's character where relevant.
 
-### HUD Layout (1v1)
-```
-[Player 1 HP] ████████░░  [Player 2 HP]  ████████░░
-[Player 1 ST] ████░░░░░░  [Player 2 ST]  ████░░░░░░
+### HUD Layout
 
+**In-world (visible to all players):**
+- **Health bar:** Floats above the character sprite. Short, readable bar. This is visible to opponents — you can read their HP.
+- **Stamina indicator:** On the side of the character (left or right), like Genshin Impact / Breath of the Wild. Vertical or arc format. Also visible to opponents — they can read when you're low.
+
+**Screen HUD (local player only):**
+- Clean minimal overlay — just round indicator, maybe a timer
+- No ability cooldown bars (Q/E removed)
+- Stamina and health are in-world, not duplicated on screen HUD
+- For team modes: ally health bars shown as a compact list on one corner (small, not distracting)
+
+```
                     [ROUND 1]
 
-[Q cooldown]  [E cooldown]          [Q cooldown]  [E cooldown]
+[HP]                                    [HP]
+ ↑ (above player sprite)               ↑ (above enemy sprite)
+[ST]                                   [ST]
+ ↑ (side of player sprite)             ↑ (side of enemy sprite)
 ```
+
+Reference: Genshin Impact's stamina circle, Zelda BotW stamina wheel — contextual, in-world, expressive.
 
 ---
 
@@ -105,7 +127,18 @@ Recommended approach: Start with **colored placeholder rectangles** to get the g
 - **Combat:** Music doesn't dramatically change during combat (not Doom-style). Maybe a subtle tension layer added.
 - **Source:** AI-generated (Suno.ai, Udio, etc.) or royalty-free. No licensed music.
 
-### SFX Design
+### Environment Audio
+Each arena has **layered ambient audio** that plays continuously:
+- Base ambient layer: wind, distant birds, water, crowd murmur (low)
+- Weather layer: rain hits, thunder rumbles, lightning crack+thunder sequence
+- Dynamic: slight volume shift when combat intensifies (optional, subtle)
+
+Weather SFX events:
+- **Rain start/stop:** fade in/out rain loop
+- **Thunder:** random rumble at low volume, every 15–60 seconds
+- **Lightning strike:** sharp crack + roll, coincides with skybox flash
+
+### Combat SFX
 Each action has distinct, satisfying sound design:
 
 | Action | Sound |
@@ -114,13 +147,17 @@ Each action has distinct, satisfying sound design:
 | Light attack (Water) | Fluid swoosh |
 | Light attack (Earth) | Stone scrape + thud |
 | Light attack (Air) | Airy slice + wind |
+| Dodge attack | More aggressive version of above + momentum whoosh |
 | Heavy impact | Deep bass thud, satisfying |
 | Block | Metallic/magical clang |
-| Parry | Sharp ring + brief silence (hitstop feel) |
+| Parry | Sharp ring + brief silence (hitstop feel) + counter projectile launch sound |
 | Dodge | Whoosh, directional |
 | Stamina break | Brittle crack, character gasp |
 | Stagger | Short grunt |
 | Hit | Distinct per element |
+| Downed | Collapse sound, brief groan |
+| Execution start | Charged dramatic sound (element-flavored) |
+| Execution complete | Satisfying finish sound + elemental burst |
 | Menu click | Soft magical chime |
 
 ### SFX Source

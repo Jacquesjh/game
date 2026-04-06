@@ -73,6 +73,7 @@ Key shared files:
 ### Element System
 - Each element has a server-side combat file: `server/src/elements/{Element}Combat.ts`
 - Each element implements the `IElementCombat` interface
+- Each element defines its attack variants (L1, L2... H1, H2...) and all combo `AttackDefinition` entries
 - Client-side visual: `client/src/elements/{Element}Element.ts`
 - New elements follow existing pattern exactly
 
@@ -91,7 +92,7 @@ Key shared files:
 
 ## Core Design Rules — Do Not Violate
 
-1. **Skill > Stats always.** Level should never be the deciding factor in a match. Any feature that inflates stat differences between level 1 and level 100 beyond 10% is wrong.
+1. **Skill > Stats always.** Levels unlock attack variants and executions — zero stat increases, ever. HP and damage are fixed values, not level-scaled.
 
 2. **Server is authoritative.** Never trust client-computed damage, position, or hit detection. Client sends inputs, server sends results.
 
@@ -100,6 +101,12 @@ Key shared files:
 4. **Elements are distinct.** Do not homogenize elements for balance. A Fire player and Water player should feel like completely different games. Balance passes come later.
 
 5. **Readable over flashy.** Attacks must be telegraphed. A player should always be able to see what's coming and have a chance to react. Never add attacks with no windup.
+
+6. **No Q/E abilities.** The combo system (L/H variants + dodge attacks + combos) is the expression layer. There is no separate ability slot system.
+
+7. **Two stamina states only.** Normal and Stamina Break. No "low stamina" intermediate state.
+
+8. **Stamina doesn't regen while attacking.** This is load-bearing for the combat depth — don't change it without discussion.
 
 ---
 

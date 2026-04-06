@@ -14,80 +14,98 @@ Reference: For Honor. The gap between a beginner and an intermediate player is n
 
 ## XP & Leveling
 
-### XP Sources
+### XP Sources (Simplified)
 | Action | XP |
 |---|---|
 | Win a match | 100 |
-| Lose a match | 30 |
-| Successful parry | 5 |
-| Stamina break opponent | 10 |
-| Deal damage | 1 per 10 damage |
-| Complete a match (any result) | 20 |
+| Lose a match | 25 |
 
-XP rewards are intentionally weighted toward **participation and skill expression**, not just winning.
+Simple. No granular per-action tracking. Win a lot = level faster. The game itself is the engagement loop.
 
 ### Level Curve
-- Levels 1–10: Fast (get to "character feels complete" quickly)
+- Levels 1–10: Fast (feel progression quickly, unlock first variants)
 - Levels 10–50: Moderate
-- Levels 50+: Slow (cosmetic prestige, no power impact)
+- Levels 50+: Slow (prestige, cosmetics)
 
-### What Levels Unlock
+### What Levels Unlock (No Stats — Ever)
 | Level | Unlock |
 |---|---|
-| 1–5 | Base character, base combo set |
-| 6 | Alternate combo variant (visual reskin, not new mechanics) |
-| 10 | Minor stat tweak (e.g. +5 max stamina — negligible) |
-| 15 | Second ability variant (different Q or E option, not strictly better) |
-| 20 | Cosmetic: elemental aura effect |
-| 25 | Alternate combo variant 2 |
-| 30 | Cosmetic: color palette alt |
-| 50 | Prestige badge |
+| 1 | Base character: L1, H1, Execution 1 |
+| 5 | L2 (alternate light attack variant) |
+| 10 | H2 (alternate heavy attack variant) |
+| 15 | Execution 2 |
+| 20 | L3 |
+| 25 | Cosmetic: elemental aura effect |
+| 30 | H3 |
+| 35 | Execution 3 |
+| 40 | L4 |
+| 50 | H4 + Cosmetic: color palette alt |
+| 75 | Execution 4 |
 | 100 | Prestige title |
 
-**Stat increases from levels:** Absolute maximum of +10% to any stat by level 100. A level 1 vs level 100 fight is not a stat fight.
+**Zero stat increases at any level.** A level 100 vs level 1 fight has identical HP, damage, and stamina values. The level 100 player has more loadout options — more L/H variants to choose from, more executions. That's it.
 
 ---
 
-## Ability Choice System
+## Attack Variant System
 
-As players level, they unlock **ability variant choices** for Q and E slots.
+This is the core progression mechanic. Players unlock **attack variants** — new versions of their light and heavy attack, each with a distinct animation, projectile shape, and combo outcome.
 
-Example for Fire:
-- Default Q: *Flame Dash*
-- Q Variant (unlocked at level 15): *Phoenix Strike* — dash forward, dealing damage along the path (higher risk, higher reward)
+### How Variants Work
+- At level 1, player has **L1** and **H1** (base variants for their element)
+- Before each match, player equips one L variant and one H variant as their loadout
+- The equipped variants define what combos are available and what they look like
+- Combo sequences (L, L, H) resolve differently depending on which L and H are equipped
 
-Players choose which variant to equip. Neither is strictly better — it's a playstyle preference.
+### Why This Works
+- New variants expand creative options without being power upgrades
+- The same combo sequence (e.g. L, L, H) can produce completely different attacks depending on variant loadout
+- Players develop preferences and "signatures" — your H2 + L1 combo setup becomes your style
+- Watching a high-level player's animations is visually distinct from a new player's
 
-This lets players customize their character to suit how they want to play, without creating pay-to-win or stat-inflation paths.
-
----
-
-## Combo Unlocks
-
-At certain levels, players unlock **new combo sequences** for their element.
-
-This is the primary progression mechanic that adds depth without changing power:
-- New combo = new option in your toolkit
-- You have to learn when to use it → skill expression
-- Not replacing old combos, adding to your palette
-
-Example unlock tree for Fire:
+### Example: Fire Variant Tree
 ```
-Level 1:  L, L, H (burst lance)
-Level 6:  H, L (scorch pulse)
-Level 12: L, H, H (eruption)
-Level 20: H, H, H (inferno meteor — new, powerful but very telegraphed)
+L1: Standard fireball       (base)
+L2: Crescent fire arc       (level 5)  — curves around obstacles
+L3: Short-range burst       (level 20) — wider but less range
+L4: Piercing bolt           (level 40) — thin, high velocity
+
+H1: Slow heavy fireball     (base)
+H2: Ground eruption         (level 10) — hits beneath instead of forward
+H3: Spiraling fire ring     (level 30) — wide, slow, high damage
+H4: Twin fire bolts         (level 50) — two simultaneous fast shots
+
+// Dodge variants use the equipped L/H for their flavor
+// DL = dodge + equipped light, DH = dodge + equipped heavy
 ```
 
-A high-level player has more tools. But if they use those tools poorly, a low-level player with fewer tools used well will win.
+### Combo Outcomes by Loadout (Fire examples)
+| Loadout | Sequence | Result |
+|---|---|---|
+| L1 + H1 | L, L, H | Burst lance (classic) |
+| L2 + H1 | L, L, H | Curving double arc into heavy burst |
+| L1 + H2 | L, H | Light shot → ground eruption |
+| L2 + H2 | DL, H | Dodge arc → ground eruption (aggressive opener) |
+
+Players who understand their element deeply can build devastating combo patterns. A new player just has fewer building blocks to work with.
 
 ---
+
+---
+
+## Multiple Characters Per Account
+
+- Players can create **multiple characters**, one per account slot (no hard limit in v1)
+- Each character has its own element (locked at creation), name, level, and progression
+- Players select which character to use when entering a party/lobby
+- Characters share the account (Firebase Auth UID) but are independent records in Firestore
+- This is a v1 feature, not future — it's part of the core UX from day one
 
 ## Character Permanence
 
 - Element is **locked at creation** — cannot respec
 - This is intentional: part of the game's identity is that your element is your identity
-- Players who want to try a different element create a new character (future: multi-character support per account)
+- Want to try a different element? Create a new character on the same account
 
 ---
 
