@@ -31,61 +31,64 @@ Simple. No granular per-action tracking. Win a lot = level faster. The game itse
 | Level | Unlock |
 |---|---|
 | 1 | Base character: L1, H1, Execution 1 |
-| 5 | L2 (alternate light attack variant) |
-| 10 | H2 (alternate heavy attack variant) |
+| 5 | L2 |
+| 10 | H2 |
 | 15 | Execution 2 |
 | 20 | L3 |
 | 25 | Cosmetic: elemental aura effect |
 | 30 | H3 |
 | 35 | Execution 3 |
-| 40 | L4 |
-| 50 | H4 + Cosmetic: color palette alt |
+| 50 | Cosmetic: color palette alt |
 | 75 | Execution 4 |
 | 100 | Prestige title |
 
-**Zero stat increases at any level.** A level 100 vs level 1 fight has identical HP, damage, and stamina values. The level 100 player has more loadout options — more L/H variants to choose from, more executions. That's it.
+Each element launches with **3 light variants (L1–L3)** and **3 heavy variants (H1–H3)**. More can be added later. Depth comes from how players mix their two equipped chains, not just from the number of variants.
+
+**Zero stat increases at any level.** A level 100 vs level 1 fight has identical HP, damage, and stamina values. The level 100 player has more loadout options. That's it.
 
 ---
 
 ## Attack Variant System
 
-This is the core progression mechanic. Players unlock **attack variants** — new versions of their light and heavy attack, each with a distinct animation, projectile shape, and combo outcome.
+This is the core progression mechanic. Players unlock **attack variants** — new versions of their light and heavy attack chains, each with distinct hit animations, projectile trajectories, and chain length.
 
 ### How Variants Work
 - At level 1, player has **L1** and **H1** (base variants for their element)
-- Before each match, player equips one L variant and one H variant as their loadout
-- The equipped variants define what combos are available and what they look like
-- Combo sequences (L, L, H) resolve differently depending on which L and H are equipped
+- Before each match, player equips one L variant and one H variant
+- Each variant is a **hit chain**: an ordered sequence of individual hits, each with its own attack properties
+- Chain lengths differ per variant — L1 might be 4 hits, L3 might be 2
+- Pressing L advances the light chain; pressing H advances the heavy chain. They interleave freely.
+- The last hit of the heavy chain is the **finisher** — it ends the combo and triggers recovery
+- After a heavy finisher, a brief grace window allows one more L input before full recovery
 
 ### Why This Works
-- New variants expand creative options without being power upgrades
-- The same combo sequence (e.g. L, L, H) can produce completely different attacks depending on variant loadout
-- Players develop preferences and "signatures" — your H2 + L1 combo setup becomes your style
-- Watching a high-level player's animations is visually distinct from a new player's
+- Variant choice changes your rhythm, not just your damage numbers
+- A 4-hit L1 chain rewards sustained aggression; a 2-hit L3 chain rewards players who like to reset quickly
+- Players mix their L and H chains in endlessly varied patterns — the same loadout plays differently depending on spacing, reads, and opponent reaction
+- Players develop a "signature" — your L1+H2 playstyle becomes recognizable
 
-### Example: Fire Variant Tree
+### Variant Structure (per element)
 ```
-L1: Standard fireball       (base)
-L2: Crescent fire arc       (level 5)  — curves around obstacles
-L3: Short-range burst       (level 20) — wider but less range
-L4: Piercing bolt           (level 40) — thin, high velocity
+Light variants:
+  L1  (base, level 1)   — to be designed per element
+  L2  (level 5)         — different chain length + hit feel
+  L3  (level 20)        — different chain length + hit feel
+  L4+ (future)          — can be added as the game expands
 
-H1: Slow heavy fireball     (base)
-H2: Ground eruption         (level 10) — hits beneath instead of forward
-H3: Spiraling fire ring     (level 30) — wide, slow, high damage
-H4: Twin fire bolts         (level 50) — two simultaneous fast shots
+Heavy variants:
+  H1  (base, level 1)   — to be designed per element
+  H2  (level 10)        — different chain length + finisher type
+  H3  (level 30)        — different chain length + finisher type
+  H4+ (future)          — can be added as the game expands
 
-// Dodge variants use the equipped L/H for their flavor
-// DL = dodge + equipped light, DH = dodge + equipped heavy
+Dodge variants (independent of L/H loadout):
+  DL_forward, DL_side, DH_forward, DH_side, DH_back, etc.
+  — each direction has its own attack; always available, no unlock needed
+  — dodge attacks act as combo starters; L/H chains continue after dodge recovery
+  — more dodge variants can be added per direction over time
 ```
 
-### Combo Outcomes by Loadout (Fire examples)
-| Loadout | Sequence | Result |
-|---|---|---|
-| L1 + H1 | L, L, H | Burst lance (classic) |
-| L2 + H1 | L, L, H | Curving double arc into heavy burst |
-| L1 + H2 | L, H | Light shot → ground eruption |
-| L2 + H2 | DL, H | Dodge arc → ground eruption (aggressive opener) |
+Specific chain designs (hit trajectories, speeds, damage) are defined per element in `02-elements-and-characters.md`.
 
 Players who understand their element deeply can build devastating combo patterns. A new player just has fewer building blocks to work with.
 

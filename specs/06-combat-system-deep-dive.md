@@ -13,9 +13,10 @@ IDLE
  ├──→ ATTACKING_HEAVY (RMB, not in recovery)
  ├──→ BLOCKING (block held + stamina > 0)
  ├──→ PARRY_ATTEMPT (block input at precise moment of incoming hit)
- ├──→ DODGING (space input, not in dodge cooldown)
+ ├──→ DODGING (space, not in dodge cooldown — direction: forward | side | back relative to aim)
  │     └──→ DODGE_ATTACKING_LIGHT (LMB during dodge i-frames)
  │     └──→ DODGE_ATTACKING_HEAVY (RMB during dodge i-frames)
+ ├──→ ROLLING (double-tap space — high stamina cost escape, no attack available)
  ├──→ STAGGERED (hit by unblocked attack)
  ├──→ STUNNED (after being parried — attacker is stunned)
  ├──→ STAMINA_BROKEN (stamina hits 0)
@@ -28,7 +29,7 @@ ATTACKING_LIGHT / ATTACKING_HEAVY
  └──→ RECOVERY (after attack fires)
        └──→ IDLE (after recovery window ends)
 
-DODGING
+DODGING (direction relative to player's aim: forward | side_left | side_right | back)
  ├── [i-frame window at start: DODGE_INVINCIBILITY_MS]
  ├── [during i-frames: can input LMB → DODGE_ATTACKING_LIGHT]
  ├── [during i-frames: can input RMB → DODGE_ATTACKING_HEAVY]
@@ -36,8 +37,18 @@ DODGING
 
 DODGE_ATTACKING_LIGHT / DODGE_ATTACKING_HEAVY
  ├── [fires attack immediately — no extra windup, inherits dodge momentum]
+ ├── [attack variant is determined by dodge direction: forward / side / back]
+ │     e.g. Water side-dodge heavy: dodge sideways, send torrent toward opponent
+ │     e.g. Fire forward-dodge light: dash in, release close-range burst
  ├── [counts as combo starter — can chain into L/H combos after recovery]
  └──→ RECOVERY → IDLE
+
+ROLLING (double-tap space within DOUBLE_TAP_WINDOW_MS — stamina required)
+ ├── [costs STAMINA_COST_ROLL on activation — emergency resource, use sparingly]
+ ├── [longer i-frame window: ROLL_INVINCIBILITY_MS]
+ ├── [longer travel distance: ROLL_DASH_DISTANCE]
+ ├── [no attack input available during roll]
+ └──→ RECOVERY → IDLE (after LOCK_ROLL elapses)
 
 PARRY_ATTEMPT (success)
  ├── [parried attack is nullified]
@@ -118,7 +129,20 @@ export const COMBAT_CONSTANTS = {
   DODGE_DASH_DISTANCE: 130,         // Units traveled
   DODGE_COOLDOWN_MS: 750,           // Cannot dodge again for 750ms
 
-  // Projectile homing
+  // Roll escape (double-tap space)
+  DOUBLE_TAP_WINDOW_MS: 200,        // Max gap between two space presses to trigger roll
+  STAMINA_COST_ROLL: 35,            // High cost — emergency use only
+  ROLL_INVINCIBILITY_MS: 350,       // Longer i-frames than regular dodge
+  ROLL_DASH_DISTANCE: 220,          // ~1.7x regular dodge distance
+  LOCK_ROLL: 650,                   // Recovery after roll (punishing if misused)
+
+  // Combo
+  COMBO_WINDOW_MS: 500,             // Max gap between inputs to continue a chain
+
+  // Soft target tracking (cast-time aim correction toward nearest opponent to cursor)
+  TARGET_LOCK_RADIUS: 80,           // Units — if opponent is within this of the cursor, attack tracks them
+
+  // Projectile homing (in-flight, only for trajectoryType 'homing')
   HOMING_ANGLE_PER_SEC: 90,         // Degrees/sec the projectile can turn toward target
   HOMING_MAX_RANGE: 400,            // Beyond this range, no homing
 
@@ -143,93 +167,149 @@ export const COMBAT_CONSTANTS = {
 
 ## Combo Resolver
 
-The combo system tracks the recent attack sequence and resolves it to a specific attack type.
+### Core Concept: Variant Chains
 
-### How It Works
+Each variant (L1, L2, L3, H1, H2, H3) is an **ordered chain of hits**. Each hit in the chain is its own `AttackDefinition` with its own trajectory, timing, and animation. The chain length is the number of hits in that variant — L1 might have 4, L3 might have 2, H2 might have 3.
 
-1. Client records attack inputs with timestamps
-2. Server has a **combo window** — if inputs come within the window, they chain
-3. After the window expires (or recovery ends), combo resets
-4. The resolved sequence maps to an `AttackDefinition`
+Players equip **one light variant** and **one heavy variant** before each match. Pressing L advances the equipped light chain; pressing H advances the equipped heavy chain. The two chains can be freely interleaved. This is where the combo variety comes from — not from fixed sequences mapped to fixed attacks, but from two independent chains playing off each other.
 
 ```typescript
 // shared/types/combat.ts
-type AttackInput = 'L' | 'H' | 'DL' | 'DH'  // L=light, H=heavy, DL=dodge-light, DH=dodge-heavy
-type ComboSequence = AttackInput[]  // e.g. ['L', 'L', 'H'] or ['DL', 'L', 'H']
+
+type DodgeDirection = 'forward' | 'side_left' | 'side_right' | 'back'
+type AttackInput = 'L' | 'H' | `DL_${DodgeDirection}` | `DH_${DodgeDirection}`
+
+interface VariantChain {
+  variantId: string          // e.g. 'fire_L1', 'water_H2'
+  element: Element
+  type: 'light' | 'heavy' | 'dodge_light' | 'dodge_heavy'
+  dodgeDirection?: DodgeDirection   // only for dodge variants
+  hits: AttackDefinition[]          // ordered chain; hits[last] is the finisher
+}
+
+interface CharacterLoadout {
+  lightVariantId: string     // e.g. 'fire_L1' (base, always available)
+  heavyVariantId: string     // e.g. 'fire_H2' (unlocked via progression)
+  executionId: string
+}
 
 interface AttackDefinition {
   id: string
-  element: Element
-  comboSequence: ComboSequence
+  variantId: string          // which VariantChain this hit belongs to
+  chainIndex: number         // 0-based position within the chain
+  isFinisher: boolean        // true = last hit of a heavy chain
+
   name: string
+  element: Element
 
   // Timing
-  windupMs: number         // Delay before attack fires (the "variable delay" for mind games)
-  recoveryMs: number       // Lock after attack fires
+  windupMs: number           // Delay before attack fires
+  recoveryMs: number         // Lock after attack fires
+
+  // Soft target tracking (applies to ALL trajectory types at cast time)
+  // When an opponent is within TARGET_LOCK_RADIUS of the cursor, the attack
+  // direction adjusts toward them automatically. This is NOT in-flight homing —
+  // it only affects the initial direction at the moment of casting.
+  // Applies to cones (aim cone at opponent), ground_line (line erupts toward opponent),
+  // spawn_at_target (snaps to opponent position), arcs (arc curves toward opponent), etc.
+  // homingStrength governs additional in-flight correction for 'homing' trajectoryType only.
+  softTrackingEnabled: boolean  // true for all attacks unless explicitly disabled
+
+  // Trajectory
+  trajectoryType:
+    | 'straight'        // Direct line from cast point toward (tracked) target
+    | 'arc'             // Parabolic curve toward target — arrives from an angle
+    | 'homing'          // In-flight tracking (homingStrength governs turn rate)
+    | 'cone'            // Fan spread toward target — wedge hitbox, no single head
+    | 'ground_line'     // Sequential ground eruptions in a line toward target
+    | 'spawn_at_target' // Spawns at opponent's position when attack fires — no travel.
+                        // Opponent must reposition BEFORE windup ends; dodging after is too late.
+
+  // Speed profile
+  speedProfile: 'constant' | 'accelerating' | 'decelerating'
+  // constant:     uniform speed throughout travel
+  // accelerating: starts slow, builds to full speed — baits early dodges
+  // decelerating: starts fast, slows — opponents who dodge early may walk back into it
+  projectileSpeedInitial: number
+  projectileSpeedFinal: number
 
   // Projectile
-  projectileSpeed: number
-  homingStrength: number   // 0 = no homing, 1 = full homing
+  homingStrength: number     // 0–1 turn rate; only meaningful for trajectoryType 'homing'
   hitboxRadius: number
-  range: number            // Max travel distance
+  range: number              // Max travel distance or effect radius
 
   // Effect
   damage: number
   staminaCost: number
-  staggerDuration: number  // How long target is staggered on hit
-  knockback: number        // Force applied to target
+  staggerDuration: number
+  knockback: number
+
+  // Trail / stream hitbox
+  // I-frames do NOT protect against trail damage — moving into the trail deals damage.
+  trail: boolean
+  trailDamage: number
+  trailWidth: number
+  trailDurationMs: number
 
   // Special
   aoe: boolean
   aoeRadius?: number
   specialEffect?: 'pull' | 'slow' | 'dot' | 'launch'
 
-  // Visuals (client-side only, server doesn't care)
-  particleEffect: string   // Key into particle system
+  // Visuals (client-side only)
+  particleEffect: string
   projectileSprite: string
   castAnimation: string
   hitAnimation: string
 }
 ```
 
-### Combo Window
+### How Chaining Works
 
 ```
-Player presses L
-  → starts combo, waits COMBO_WINDOW_MS (e.g. 500ms) for next input
-  → if L again within window: combo is now ['L', 'L'], continue waiting
-  → if H within window: combo is ['L', 'H'], resolve
-  → if nothing within window: resolve ['L']
+Player has L1 (4-hit chain) + H2 (3-hit chain) equipped.
 
-Player dodges, then presses L during i-frames
-  → combo starts as ['DL']
-  → continues: ['DL', 'L'], ['DL', 'L', 'H'], etc.
+L chain index starts at 0. H chain index starts at 0.
+Each L press fires L_chain[L_index] and increments L_index.
+Each H press fires H_chain[H_index] and increments H_index.
+
+Example combo: L, L, H, H, H
+  → L_chain[0], L_chain[1], H_chain[0], H_chain[1], H_chain[2] (isFinisher=true)
+  → Heavy finisher fires → recovery begins
+  → Grace window: one final L input allowed → fires L_chain[2] before full lock
+
+Example combo: H, L, L, L
+  → H_chain[0], L_chain[0], L_chain[1], L_chain[2]
+  → No finisher hit yet; combo window still open for more inputs
+
+Example combo: L, L (with L3, 2-hit chain)
+  → L_chain[0], L_chain[1] — light chain exhausted, resets to 0
+  → Combo continues; can now press L again (starts L chain over) or press H
+
+Key rules:
+  - Heavy chain's last hit (isFinisher=true) always triggers recovery and ends the combo
+  - After a heavy finisher, one grace L input is allowed before full recovery locks in
+  - Light chains do not have a hard finisher — reaching the end simply resets the L index
+  - If COMBO_WINDOW_MS elapses without a new input, both chain indices reset
+  - Recovery after any individual hit (non-finisher) is short — this is what creates
+    the dodge/parry window; recovery after the heavy finisher is the full recovery lock
 ```
 
-Window resets after each attack's recovery completes. Can't chain into next attack mid-recovery (this is what creates the stagger opportunity).
+### Dodge Attacks as Chain Starters
 
-### Attack Variant System
-
-Players equip **one light variant** and **one heavy variant** before each match. Variants are unlocked through progression.
-
-```typescript
-interface CharacterLoadout {
-  lightVariantId: string   // e.g. 'fire_light_2' (unlocked at level 15)
-  heavyVariantId: string   // e.g. 'fire_heavy_1' (base)
-  executionId: string      // which execution animation to use
-}
-```
-
-The combo resolver uses the equipped variant to determine which `AttackDefinition` to apply. Two players with the same element but different equipped variants have different combo outcomes for the same input sequence.
+Dodge attacks (DL/DH with direction) fire immediately during dodge i-frames and count as the combo's first hit. After the dodge attack recovers, the L/H chains start from index 0. The dodge attack itself is its own `VariantChain` (type `dodge_light` or `dodge_heavy`, direction-specific).
 
 ```
-Example: Fire player A (L1 + H1) vs Fire player B (L2 + H1)
-Both press L, L, H:
-  Player A: fires 'fire_l1_l1_h1' attack (burst lance)
-  Player B: fires 'fire_l2_l1_h1' attack (different trajectory, same general threat)
+Player side-dodges and presses H → fires DH_side (its own AttackDefinition)
+  → after recovery: H chain index = 0, L chain index = 0
+  → player can continue with L, L, H, H... as a normal combo from here
 ```
 
-Each `AttackDefinition` references its own unique animation key — every combo sequence has a distinct visual.
+### Variant Depth Per Element
+
+Each element has **3 light variants (L1–L3)** and **3 heavy variants (H1–H3)**, plus directional dodge variants (DL and DH, each in 3 directions). Chain lengths and individual hit properties differ between variants, creating meaningfully different playstyles within the same element.
+
+Variants are unlocked through progression. L1 and H1 are always available at character creation. Specific variant designs are defined per element in `02-elements-and-characters.md` — not here.
 
 ---
 
@@ -251,6 +331,14 @@ Each `AttackDefinition` references its own unique animation key — every combo 
 
 This means you can be attacked from the side or behind to bypass block. In 1v1 it's mostly about aiming at your opponent, but creates depth in team modes.
 
+### Sustain Hold for Heavy Attacks
+
+Heavy attacks have a long windup (`LOCK_HEAVY_ATTACK_WINDUP`). To block one successfully, the player must **hold block through the entire windup animation** — not just tap at the end. If the player releases block before the attack fires, the block fails and the hit lands.
+
+This creates meaningful mind games: a patient attacker can delay the fire timing slightly (per-attack `windupMs` varies), baiting the defender into releasing block too early. The defender must read the animation, not just react to the impact.
+
+Light attacks have shorter windups — the hold window is brief, and the parry timing is tighter. Heavy windups are longer, giving more time to prepare, but also more time to be baited.
+
 ### Parry Timing
 - Parry is triggered by pressing block at the **moment of impact** (within `PARRY_WINDOW_MS`)
 - The window begins when the attack visually arrives (client shows impact frame)
@@ -263,13 +351,22 @@ This means you can be attacked from the side or behind to bypass block. In 1v1 i
 
 Every tick, server:
 1. Advances all projectile positions
-2. Checks each projectile against all player hitboxes
-3. For each collision:
-   a. Is target DODGING (in i-frames)? → miss
+2. Checks each projectile head against all player hitboxes
+3. For each projectile collision:
+   a. Is target DODGING or ROLLING (in i-frames)? → miss
    b. Is target BLOCKING and facing correct direction?
       - Is it a successful parry? → apply PARRY result
       - Normal block: apply `DAMAGE_BLOCKED_MULTIPLIER` damage, drain target stamina
    c. Otherwise: full hit → apply damage, stagger target, apply knockback
+
+4. For each active trail zone (stream attacks):
+   a. Is target inside the trail hitbox this tick?
+   b. **I-frames do NOT protect against trail damage.** A player who dodges or rolls
+      INTO the trail zone still takes `trailDamage` per tick. This is intentional —
+      the opponent must dodge perpendicular to or away from the stream's direction,
+      not through it.
+   c. Is target BLOCKING and facing? → apply `DAMAGE_BLOCKED_MULTIPLIER` reduction
+   d. Otherwise: trail damage per tick, no stagger (trail hits are chip, not stagger)
 
 ---
 

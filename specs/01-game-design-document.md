@@ -75,8 +75,7 @@ Players name their character. Future: cosmetic customization (skins, effects).
 - **Health (HP):** Takes damage from attacks. Death = round loss.
 - **Stamina:** Consumed by attacks and blocking. Regenerates over time.
   - **Normal stamina:** All actions available.
-  - **Low stamina (< 20%):** Block is weakened (can be broken), attacks are slower, recovery windows are longer.
-  - **Stamina break (0):** Briefly staggered. Slow regen. Very vulnerable.
+  - **Stamina break (0):** Character stumbles briefly. Block unavailable during recovery. Slow regen until recovered.
 - Stamina regen is steady and automatic. No mechanic to speed it up (keep it simple).
 
 ### 5.2 Actions
@@ -85,11 +84,12 @@ Players name their character. Future: cosmetic customization (skins, effects).
 |---|---|---|---|
 | Light Attack | LMB | Low | Fast, low damage, low recovery |
 | Heavy Attack | RMB | Medium | Slower startup, higher damage, knockback. Press, not hold. |
-| Dodge Light | LMB during dodge | Low | Unique attack from dodge state; combo starter |
-| Dodge Heavy | RMB during dodge | Medium | Unique attack from dodge state; combo starter |
-| Block | Hold Shift | Medium/tick | Directional — must face incoming attack. Regen slowed while blocking. |
+| Dodge Light | LMB during dodge | Low | Direction-dependent attack (forward / side / back dodge each yield different attack) |
+| Dodge Heavy | RMB during dodge | Medium | Direction-dependent attack; combo starter |
+| Block | Hold Shift | Medium/tick | Directional — must face incoming attack. Must sustain hold through full attack windup. |
 | Parry | Shift + timing | Low | Precise timing window. Success: auto-fires counter projectile + brief instant-cast window. |
-| Dodge | Space | None | Has cooldown + animation recovery. No stamina cost. |
+| Dodge | Space | None | Directional (forward / side / back relative to aim). Cooldown + recovery after. |
+| Roll Escape | Double-tap Space | High | Longer dash, longer i-frames. No attack available. Emergency defensive tool. |
 | Execute | F (near downed enemy) | None | Begins execution animation. Long, leaves you exposed. |
 
 > **TBD:** Exact key bindings are placeholder. Will finalize during UI spec.
@@ -117,30 +117,21 @@ Movement is **free and fluid** — 8-directional with analog feel, like Wizard o
 
 ### 5.5 Combo System
 
-**Attack variants:** Each element has multiple variants of light and heavy attacks (L1, L2, H1, H2, etc.). Players unlock more variants through progression. Before a match, the player equips one light variant and one heavy variant as their base attacks. These are mechanically and visually distinct — not strictly better, just different.
+**Attack variants:** Each element has 3 light variants (L1–L3) and 3 heavy variants (H1–H3), plus directional dodge variants. Players unlock variants through progression. Before a match, they equip one light and one heavy variant. L1 and H1 are always available.
 
-Attack inputs (L = Light variant equipped, H = Heavy variant equipped, DL = Dodge Light, DH = Dodge Heavy) create combo strings. The sequence determines:
-- Attack shape/trajectory
-- Element-specific visual effect
-- Functional behavior (projectile, AoE, trap, etc.)
+Each variant is a **hit chain** — an ordered sequence of individual hits, each with its own trajectory, timing, and animation. Chain lengths differ per variant (e.g. L1 might be 4 hits, L3 might be 2).
 
-Example combos (element-agnostic framework):
-| Sequence | Attack Type | Notes |
-|---|---|---|
-| L | Standard light | Fast, small |
-| L, L | Followup light | Slightly faster |
-| L, L, H | Fast projectile | Ranged burst |
-| L, H | Power shot | Medium range, knockback |
-| L, H, H | Ground slam / attack beneath | AoE or trap |
-| H | Slow heavy | High damage, telegraphed |
-| H, H | Charged heavy | Maximum damage, long cast |
-| H, L | Quick reset | Cancel heavy into a fast poke |
-| DL | Dodge light | Engage from movement, short-range burst |
-| DL, L | Dodge into light chain | Momentum combo |
-| DH | Dodge heavy | High-risk engage from movement |
-| DH, H | Dodge into heavy chain | Commitment combo |
+**Combo chaining:** Pressing L advances the equipped light chain; pressing H advances the equipped heavy chain. The two chains interleave freely — players mix L and H presses in any order. The last hit of the heavy chain is the **finisher**: it ends the combo and triggers full recovery. After a heavy finisher, a brief grace window allows one more L input before full recovery locks in.
 
-Combos are element-flavored — Fire's L,L,H might be a fireball burst; Water's L,L,H might be a water lance. Each combo sequence has its **own unique animation** — the visual for L,L,H is different from L,H,H is different from H,H. Dodge attack animations are also distinct.
+This creates enormous variety from a simple loadout choice. A player with L1 (4-hit) + H2 (3-hit) can do:
+- `L, L, H, H, H` — 2 lights into heavy finisher
+- `H, L, L, L` — heavy opener into 3 lights
+- `L, L, L, H, H, H` — exhaust most of both chains
+- … and many more patterns, each with distinct timing and visual payoff
+
+Two players with the same element but different loadouts (L1+H2 vs L3+H1) play completely differently even against the same opponent.
+
+Combos are element-flavored — each individual hit in a chain has its own visual and trajectory. Dodge attacks (DL/DH) are separate directional variants that act as combo starters — after a dodge attack's recovery, the L/H chains continue from the beginning.
 
 ### 5.5 Stagger & Hitstop
 
@@ -155,6 +146,17 @@ Combos are element-flavored — Fire's L,L,H might be a fireball burst; Water's 
 - Opponent who dodges/blocks too early gets caught
 - Example: Fire heavy has a 0.8s delay before the projectile fires — bait the dodge, then punish
 - Parry timing window is tight. Successful parry = brief counter opportunity
+- **Sustain-hold block:** To block a heavy attack the defender must hold block through the full windup animation. Releasing early lets the hit through. Variable windup per attack creates read/misread opportunities.
+
+### 5.6b Stream / Trail Attacks
+
+Many heavy attacks (and some combo finishers) fire as **elemental streams** — a long projectile with a travel tail that leaves a persistent damage zone along its path. The trail lingers briefly after the projectile head passes.
+
+Key properties:
+- **Direction determines safe dodge angle.** A stream coming straight at you must be dodged sideways. A stream angled from the side must be dodged away from, not into. Dodging into the stream's path deals damage regardless of i-frames.
+- **Trail damage is chip, not stagger** — it won't interrupt combos but punishes greedy repositioning.
+- Streams are element-flavored: Fire sends a column of flame, Water sends a torrent, Air sends a pressurized gale, Earth sends a rolling boulder trail.
+- Projectile speed for streams is moderate — not so slow they're trivial to avoid, not so fast reaction is impossible. The travel time is part of the read game.
 
 ### 5.7 Parry
 
@@ -172,17 +174,31 @@ This resolves the parry counter at range problem: you don't need to close distan
 ### 5.8 Dodge
 
 - Instant dash in any direction (8-directional)
-- No stamina cost
-- Has an **animation recovery** time after dodge — cannot chain dodges spam
+- **Direction relative to aim matters:** forward, side (left/right), and back dodges each unlock a different dodge attack when LMB/RMB is pressed during i-frames. Elements are designed with all three directions in mind.
+- No stamina cost for regular dodge
+- Has an **animation recovery** time after dodge — cannot chain dodge spam
 - Can be used to break homing on projectiles (requires timing)
 - Dodge has an **invincibility frame** window at the start
 
-### 5.9 Out-of-Stamina State
+### 5.8b Roll Escape
 
-- Block becomes **penetrable** — heavy attacks break through
-- Attack animations are visibly slower (telegraphed)
-- After attacks, recovery windows are longer
-- Creates a natural "comeback mechanic" — skilled opponent can bait stamina drain, then punish
+- **Double-tap Space** within a short window to trigger a roll instead of a regular dodge
+- Significantly longer dash and longer i-frame window than a regular dodge
+- **High stamina cost** — not a routine tool, reserved for getting out of dangerous situations
+- No attack can be fired during a roll
+- **Stream/trail attacks are not evaded by rolling through them.** I-frames protect against projectile heads, not persistent trail zones. Rolling into the path of a water torrent or fire stream still deals damage — the correct response is to dodge/roll perpendicular or away from the stream's direction.
+
+### 5.9 Stamina Break State
+
+There are exactly two stamina states: **normal** and **stamina break**. No intermediate.
+
+Stamina break triggers when stamina hits 0:
+- Character visually stumbles (`LOCK_STAMINA_BREAK` animation)
+- **Block is completely unavailable** for the full break recovery period (`STAMINA_BREAK_RECOVERY_MS`)
+- Stamina regenerates at the slow broken rate (`STAMINA_REGEN_BROKEN_PER_SEC`) during recovery
+- After recovery ends, normal regen resumes and block becomes available again
+
+The binary nature is intentional — the moment of stamina break is a decisive, readable event. There is no gradual degradation. Core rhythm: **bait aggressive attacking or sustained blocking → stamina drains → stamina break → punish window**.
 
 ---
 

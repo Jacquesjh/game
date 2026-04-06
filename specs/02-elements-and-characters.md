@@ -15,9 +15,25 @@ Each element has:
 - Distinct **color palette** and **particle style**
 - Unique L/H attack variants (L1, L2... H1, H2...) with distinct animations
 - Unique combo outcomes (same L,L,H input = different attack per element)
-- Unique dodge attack feel (DL, DH)
+- Unique dodge attack feel (DL, DH) — all three dodge directions (forward, side, back) have distinct attacks
 - Unique execution animations
 - Unique passive trait (small always-on modifier)
+
+**Trajectory & Speed Variety (applies to all elements):**
+Every element's kit must mix trajectory types and speed profiles. No element should have all straight constant-speed attacks. The variety forces opponents to learn each attack individually:
+- *Straight* attacks reward aim; *arc* attacks reward misdirection
+- *Accelerating* attacks bait early dodges; *decelerating* attacks punish early dodges by lingering
+- *ground_line* and *spawn_at_target* attacks require repositioning before the attack fires, not dodging after
+
+**Variant Structure (per element):**
+- **L1, L2, L3...** — light chains of varying length. Longer chains reward sustained aggression; shorter chains suit players who mix L/H more. L1 is the base. More variants can be added over time.
+- **H1, H2, H3...** — heavy chains of varying length. H chain's last hit is always the combo finisher (triggers recovery). H1 is the base. More variants can be added over time.
+- **DL (forward / side / back)** — dodge light attacks, one per direction
+- **DH (forward / side / back)** — dodge heavy attacks, one per direction
+
+Specific chain lengths, hit properties, trajectories, and animations for each variant are **to be defined per element** — see the element sections below. This is where the bulk of design work lives and will be expanded over time.
+
+All attacks across all elements apply **soft target tracking at cast time** — the attack direction adjusts toward the nearest opponent within `TARGET_LOCK_RADIUS` of the cursor. This applies to every trajectory type (cone orients toward opponent, ground_line erupts toward opponent, spawn_at_target snaps to opponent position, etc.).
 
 ---
 
@@ -28,29 +44,19 @@ Each element has:
 **Visual Identity:**
 - Palette: deep oranges, crimson, molten gold
 - Particles: ember trails, flare bursts, heat distortion
-- Attack shapes: lances, spiraling fireballs, explosive rings
+- Attack shapes: lances, cones, spiraling fireballs, explosive rings
 
 **Passive:** *Ignite* — attacks that land on a blocked opponent apply a small DoT (damage over time). Rewards constant pressure.
 
-**Light Attack:** Fast, short-range fire bolt. Low damage, fast recovery.
+**Attack flavor:** Fast, direct, in-your-face. Fire attacks should feel like commitment — high damage when they land, punishing recovery when they miss. Mix of straight and accelerating trajectories for the core kit, with cone and ground eruption options in variants. Even Fire's arcs should feel aggressive, not passive.
 
-**Heavy Attack:** Charged fireball with visible windup glow. High damage, moderate knockback. Variable delay — hard to dodge reliably.
-
-**Combo Outcomes:**
-| Sequence | Attack |
-|---|---|
-| L, L | Dual bolt — two bolts in quick succession |
-| L, L, H | Burst lance — fast-traveling long-range bolt |
-| L, H | Concussive blast — shorter range, knockback heavy |
-| L, H, H | Eruption — ground burst beneath target, brief AoE |
-| H, H | Meteor — very slow, very high damage, large projectile |
-| H, L | Scorch pulse — quick radial fire burst to interrupt |
-
-**Dodge Light (DL):** Short forward-dash fireball. Fast, low damage. Excellent combo opener.
-
-**Dodge Heavy (DH):** Dash forward trailing fire, then emit a small AoE burst at endpoint. Higher risk, high reward opener.
-
-**Stamina Cost Profile:** High relative to other elements. Fire rewards aggression but punishes reckless spamming — attacking stalls regen, and Fire attacks cost more stamina than average.
+**Variants (to be designed):**
+- L1 (base): long chain, aggressive poke-focused
+- L2, L3: to be defined — vary chain length and hit feel
+- H1 (base): to be defined
+- H2, H3: to be defined
+- DL forward / side / back: forward is the core engage; side flick an arc; back punishes chasers
+- DH forward / side / back: forward is high-commitment burst; side sweeps wide arc; back escape shot
 
 ---
 
@@ -61,29 +67,19 @@ Each element has:
 **Visual Identity:**
 - Palette: seafoam, deep navy, aqua, silver-white crests
 - Particles: flowing streams, splash ripples, ice crystal fragments
-- Attack shapes: arcing streams, spherical bubbles, crescent waves
+- Attack shapes: arcing streams, spherical bubbles, crescent waves, long torrents
 
 **Passive:** *Flow State* — successfully blocking an attack restores a small amount of stamina. Rewards smart defensive play.
 
-**Light Attack:** Curved water arc. Moderate speed, slight homing. Can curve around obstacles.
+**Attack flavor:** Curved, flowing, deceptive. Water attacks should rarely go straight — arcs are the identity. The one time Water fires straight, it should feel like a deliberate surprise. Some attacks pull the opponent; some deny space. Key concept: side DH sends a long arcing stream with a trail hitbox — opponent must read the stream's direction to dodge correctly.
 
-**Heavy Attack:** Water lance — straight, high velocity. Less damage than Fire heavy but faster travel.
-
-**Combo Outcomes:**
-| Sequence | Attack |
-|---|---|
-| L, L | Double arc — two curved streams |
-| L, L, H | Water lance — fast piercing projectile |
-| L, H | Undertow — pulls opponent slightly toward caster |
-| L, H, H | Tide crash — large slow wave, wide AoE, knockdown on hit |
-| H, H | Blizzard bolt — slows opponent movement briefly |
-| H, L | Current snap — quick mid-range water snap, interrupts dodge |
-
-**Dodge Light (DL):** Quick sidestep water slash. Low cost, curved trajectory — good for mind games.
-
-**Dodge Heavy (DH):** Dodge into an undertow pull — short-range wave that drags opponent toward you. High skill expression.
-
-**Stamina Cost Profile:** Low to moderate. Water's passive (stamina regen on block) means sustained blocking is viable — patient play keeps stamina topped up.
+**Variants (to be designed):**
+- L1 (base): arc-heavy poke chain
+- L2, L3: to be defined
+- H1 (base): to be defined
+- H2, H3: to be defined
+- DL forward / side / back: forward close-range surprise straight; side curved arc; back spreading arc
+- DH forward / side / back: forward undertow pull; side long arcing stream (trail, signature); back slow wave area denial
 
 ---
 
@@ -94,29 +90,20 @@ Each element has:
 **Visual Identity:**
 - Palette: stone grays, moss greens, amber sandstone, deep brown
 - Particles: rock chunks, dust clouds, vine fragments, crystal spires
-- Attack shapes: boulders, stone shards, rising pillars
+- Attack shapes: boulders, stone shards, rising pillars, spike lines
 
 **Passive:** *Fortitude* — stamina drain from blocking is reduced by 30%. Earth can sustain a block stance significantly longer.
 
-**Light Attack:** Stone shard — medium speed, heavy hit feel even on light attacks. Short range.
+**Attack flavor:** Heavy, deliberate, ground-based. Earth attacks should feel slow but inevitable — large hitboxes, massive stagger, hard to dodge if you misread them. Key trajectory concepts: ground_line spike eruptions (straight and arc variants) that must be dodged sideways; boulders that decelerate to punish early dodges. Earth is about forcing the opponent into bad positions, not chasing them.
 
-**Heavy Attack:** Boulder throw — slow travel, massive stagger on hit. Hard to dodge due to size.
-
-**Combo Outcomes:**
-| Sequence | Attack |
-|---|---|
-| L, L | Shard burst — two shards in spread |
-| L, L, H | Stone javelin — fast, narrow, piercing shot |
-| L, H | Ground spike — spike erupts beneath target at short range |
-| L, H, H | Earthshatter — massive radial ground slam, huge AoE, slow cast |
-| H, H | Monolith — extremely slow, if it hits: massive damage + long stagger |
-| H, L | Rubble spray — quick low-damage spread shot to interrupt |
-
-**Dodge Light (DL):** Short backwards/sideways dodge + stone shard counter-flick. Defensive — retreats while firing.
-
-**Dodge Heavy (DH):** Charge dodge forward + boulder slam at endpoint. Commitment move, huge stagger on hit.
-
-**Stamina Cost Profile:** Low. Earth attacks cost less stamina than other elements, and blocking drains less due to the Fortitude passive. Built for sustained fights.
+**Variants (to be designed):**
+- L1 (base): slow but hard-hitting shard chain
+- L2, L3: to be defined
+- H1 (base): boulder throw (straight, decelerating)
+- H2: spike line (ground_line, straight) — must be dodged sideways
+- H3: arc spike line (ground_line, curved path) — different read from H2; two spike variants teach opponent to distinguish windup
+- DL forward / side / back: forward aggressive poke; side arc flick; back counter-flick (signature — retreats, punishes chasers)
+- DH forward / side / back: forward boulder charge; side perpendicular spike line; back ground spike area denial
 
 ---
 
@@ -127,27 +114,19 @@ Each element has:
 **Visual Identity:**
 - Palette: sky blue, pale white, violet-edged clouds, cyan lightning
 - Particles: wind trails, feather wisps, cloud puffs, micro-lightning arcs
-- Attack shapes: slicing crescents, cyclone spirals, compressed air bursts
+- Attack shapes: slicing crescents, cyclone spirals, compressed air bursts, tornadoes
 
 **Passive:** *Gust Step* — dodge has shorter recovery time than other elements. Air can chain movement more freely.
 
-**Light Attack:** Air crescent — fast-traveling slice, thin hitbox.
+**Attack flavor:** Fast, unpredictable, positional. Air attacks mix straight fast hits with arcs and spawn_at_target to keep opponents guessing. No single attack is obviously threatening — the danger is that Air can chain them from any direction, any position. Key concept: forward DH spawns a tornado at the opponent's location (spawn_at_target) — the tell is the windup; the opponent must move before it fires. Side DH leaves a wind trail.
 
-**Heavy Attack:** Cyclone bolt — spiraling projectile, wide hitbox, medium travel speed. Deceptively hard to dodge due to spin.
-
-**Combo Outcomes:**
-| Sequence | Attack |
-|---|---|
-| L, L | Twin slash — two rapid crescents |
-| L, L, H | Wind burst — fast AoE radial burst around caster |
-| L, H | Updraft — launches opponent briefly (reduces their dodge availability) |
-| L, H, H | Tempest — large spiraling wave, homing but slow |
-| H, H | Storm call — brief channeled storm (multiple small hits) |
-| H, L | Pressure snap — close-range knockback |
-
-**Dodge Light (DL):** Teleport-like blink dodge + instant air crescent. Very fast, short range. Air's signature "now you see me" move.
-
-**Dodge Heavy (DH):** Cyclone dodge — spin dodge leaving a wind trail that damages anyone caught in it, then fire a spiral at endpoint.
+**Variants (to be designed):**
+- L1 (base): fast crescent chain, straight
+- L2, L3: to be defined
+- H1 (base): cyclone bolt (arc, wide hitbox)
+- H2, H3: to be defined
+- DL forward / side / back: forward blink-in straight crescent; side blink arc; back blink-away straight poke
+- DH forward / side / back: forward tornado spawn_at_target (signature); side spin trail + cyclone arc; back wide arc area denial
 
 **Stamina Cost Profile:** Moderate. Air's Gust Step passive makes dodging more viable as a defense strategy, reducing reliance on blocking. Less tanky overall — position or die.
 
